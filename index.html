@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="es" translate="no" class="notranslate">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google" content="notranslate">
+    <title>Ser y Estar Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Anti-AI & Anti-Selection Guardrails */
+        body {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            font-family: 'Inter', sans-serif;
+        }
+        input[type="radio"] {
+            transform: scale(1.2);
+            margin-right: 12px;
+            cursor: pointer;
+        }
+        .option-label {
+            display: flex;
+            align-items: center;
+            padding: 1.1rem;
+            border-radius: 0.75rem;
+            border: 2px solid #bae6fd;
+            background-color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .option-label:hover {
+            border-color: #0284c7;
+            background-color: #f0f9ff;
+        }
+        input[type="radio"]:checked + .option-text {
+            font-weight: bold;
+            color: #0369a1;
+        }
+    </style>
+</head>
+<body class="bg-sky-50 text-sky-950 min-h-screen flex flex-col items-center justify-center p-4" oncontextmenu="return false;" oncopy="return false;" oncut="return false;" onpaste="return false;">
+
+    <script>
+        // PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL HERE
+        const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxCS4RTjryw4mNi7frycJVuY0dXO9iEHqKMkTjRLQwiRKmhf5Yoa_pFUsCQwXvxP6g/exec"; 
+    </script>
+
+    <div id="app-container" class="w-full max-w-3xl bg-white rounded-2xl shadow-2xl overflow-hidden relative border border-sky-100">
+        
+        <!-- Header -->
+        <div class="bg-sky-600 p-6 text-white text-center">
+            <h1 class="text-3xl font-bold tracking-wide">Ser y Estar Test</h1>
+            <p class="text-sky-100 mt-2">Comprehensive 50-Question Evaluation (StudySpanish Units 1-4: Ser vs. Estar)</p>
+        </div>
+
+        <!-- Start Screen: Student Info Entry -->
+        <div id="start-screen" class="p-8">
+            <form id="student-form" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold mb-1">First Name</label>
+                        <input type="text" id="fname" required class="w-full border-2 border-sky-200 rounded-lg p-3 focus:outline-none focus:border-sky-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold mb-1">Last Name</label>
+                        <input type="text" id="lname" required class="w-full border-2 border-sky-200 rounded-lg p-3 focus:outline-none focus:border-sky-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-1">School Email / ID (Alphanumeric allowed)</label>
+                    <input type="text" id="email" required class="w-full border-2 border-sky-200 rounded-lg p-3 focus:outline-none focus:border-sky-500">
+                    <p class="text-xs text-red-500 mt-1 hidden" id="email-error">This email or ID has already submitted a test attempt.</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-1">Period</label>
+                    <select id="period" required class="w-full border-2 border-sky-200 rounded-lg p-3 focus:outline-none focus:border-sky-500 bg-white">
+                        <option value="" disabled selected>Select your period...</option>
+                        <option value="1st">1st</option>
+                        <option value="A2">A2</option>
+                        <option value="A4">A4</option>
+                        <option value="B2">B2</option>
+                        <option value="B3">B3</option>
+                        <option value="5th">5th</option>
+                    </select>
+                </div>
+                <div class="pt-4">
+                    <button type="submit" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-200 text-lg">
+                        Begin Test
+                    </button>
+                    <p class="text-xs text-center text-red-600 mt-3 font-semibold">
+                        ⚠️ Warning: Leaving the active browser window, switching tabs, clicking outside the active window, or moving your cursor outside triggers a cheating alert!
+                    </p>
+                </div>
+            </form>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="p-8 hidden">
+            <div class="flex justify-between items-center mb-6">
+                <span id="question-tracker" class="text-sm font-bold bg-sky-100 text-sky-800 py-1 px-3 rounded-full">Question 1 / 50</span>
+                <span id="cheat-counter-display" class="text-sm font-bold text-red-500">Alerts: <span id="cheat-number">0</span></span>
+            </div>
+            
+            <h2 id="question-text" class="text-2xl font-bold mb-6 text-sky-950 select-none"></h2>
+            
+            <div id="options-container" class="space-y-3 mb-8">
+                <!-- Dynamic Options Injection -->
+            </div>
+            
+            <div class="flex justify-between">
+                <button id="btn-back" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-6 rounded-lg transition duration-200">
+                    Back
+                </button>
+                <button id="btn-next" class="bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 px-8 rounded-lg shadow-md transition duration-200">
+                    Next
+                </button>
+            </div>
+        </div>
+
+        <!-- End Screen -->
+        <div id="end-screen" class="p-8 hidden text-center">
+            <div class="text-6xl mb-4">🎉</div>
+            <h2 class="text-3xl font-bold mb-4 text-sky-900">Test Submitted Successfully!</h2>
+            <p class="text-lg mb-6">Your record has been securely submitted to the teacher's grade sheet. Your personal record CSV file has also downloaded automatically.</p>
+            <div class="bg-sky-50 border border-sky-200 rounded-lg p-6 mb-8 inline-block">
+                <p class="text-sm text-gray-600 mb-1">Final Percentage Score</p>
+                <p id="final-score" class="text-4xl font-bold text-sky-600"></p>
+            </div>
+            <div>
+                <button id="btn-refresh" class="bg-sky-600 hover:bg-sky-700 text-white font-bold py-3 px-8 rounded-lg shadow-md transition duration-200">
+                    Start Over (New Student)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cheating Modal Warning -->
+    <div id="cheat-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl p-8 max-w-sm w-full text-center shadow-2xl">
+            <div class="text-red-500 text-5xl mb-4">⚠️</div>
+            <h2 class="text-2xl font-bold text-red-600 mb-2">Cheating Detected!</h2>
+            <p class="text-gray-700 mb-6">You left the active test window, navigated away, clicked outside the designated area, or switched tabs. This incident has been logged.</p>
+            <button id="btn-cheat-ok" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg w-full">
+                I Understand
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // 50 Question Master Bank covering Ser and Estar (StudySpanish Units 1-4) - NO VOSOTROS
+        const rawQuestions = [
+            // Estar - Location / Condition
+            { q: "Select the correct verb form: 'Nosotros _____ en la clase de español.' (Location)", correct: "estamos", distractors: ["somos", "estáis", "son"] },
+            { q: "Select the correct verb form: '¿Dónde _____ tú?' (Location)", correct: "estás", distractors: ["eres", "es", "está"] },
+            { q: "Select the correct verb form: 'Yo _____ cansado hoy.' (Condition/Feeling)", correct: "estoy", distractors: ["soy", "está", "estamos"] },
+            { q: "Translate to Spanish: 'The soup is cold.' (Temporary condition)", correct: "La sopa está fría.", distractors: ["La sopa es fría.", "La sopa son fría.", "La sopa estoy fría."] },
+            { q: "Translate to Spanish: 'Where are you (formal singular)?'", correct: "¿Dónde está usted?", distractors: ["¿Dónde eres tú?", "¿Dónde estás tú?", "¿Dónde son ustedes?"] },
+            { q: "Translate to Spanish: 'The students are in the library.' (Location)", correct: "Los estudiantes están en la biblioteca.", distractors: ["Los estudiantes son en la biblioteca.", "Los estudiantes estamos en la biblioteca.", "Los estudiantes soy en la biblioteca."] },
+            { q: "Select the correct form: 'Madrid _____ en España.' (Geographic location)", correct: "está", distractors: ["es", "soy", "están"] },
+            { q: "Select the correct form: 'La puerta _____ abierta.' (Condition resulting from action)", correct: "está", distractors: ["es", "son", "están"] },
+            { q: "Translate to Spanish: 'We are happy today.' (Transient emotion)", correct: "Estamos contentos hoy.", distractors: ["Somos contentos hoy.", "Estáis contentos hoy.", "Soy contento hoy."] },
+            { q: "Translate to Spanish: 'The window is closed.' (Condition)", correct: "La ventana está cerrada.", distractors: ["La ventana es cerrada.", "La ventana son cerrada.", "La ventana estoy cerrada."] },
+            { q: "Select the correct form: 'Mis amigos _____ en México ahora.' (Location)", correct: "están", distractors: ["somos", "son", "estamos"] },
+            { q: "Translate to Spanish: 'You are nervous.' (Temporary state - informal)", correct: "Estás nervioso.", distractors: ["Eres nervioso.", "Es nervioso.", "Estoy nervioso."] },
+            { q: "Select the correct form: 'El libro _____ encima de la mesa.' (Location)", correct: "está", distractors: ["es", "son", "estoy"] },
+            { q: "Translate to Spanish: 'The coffee is hot.' (Condition)", correct: "El café está caliente.", distractors: ["El café es caliente.", "El café son caliente.", "El café soy caliente."] },
+            { q: "Select the correct form: '¿Cómo _____ usted?' (Health/Condition)", correct: "está", distractors: ["es", "eres", "estás"] },
+            { q: "Translate to Spanish: 'The apples are green.' ( unripe / condition)", correct: "Las manzanas están verdes.", distractors: ["Las manzanas son verdes.", "Las manzanas somos verdes.", "Las manzanas soy verdes."] },
+            { q: "Translate to Spanish: 'I am sick today.'", correct: "Estoy enfermo hoy.", distractors: ["Soy enfermo hoy.", "Estás enfermo hoy.", "Es enfermo hoy."] },
+            { q: "Select the correct form: 'Las plumas _____ en la mochila.' (Location)", correct: "están", distractors: ["son", "somos", "estáis"] },
+            { q: "Translate to Spanish: 'You all are busy.' (Latin America plural - condition)", correct: "Ustedes están ocupados.", distractors: ["Ustedes son ocupados.", "Vosotros estáis ocupados.", "Somos ocupados."] },
+            { q: "Select the correct form: 'El agua _____ fría.' (Condition)", correct: "está", distractors: ["es", "son", "soy"] },
+
+            // Ser - Origin, Time, Occupation, Material, Characteristics, Possession
+            { q: "Translate to Spanish: 'I am a student.'", correct: "Soy estudiante.", distractors: ["Estoy estudiante.", "Eres estudiante.", "Es estudiante."] },
+            { q: "Translate to Spanish: 'You are intelligent.' (Inherent quality - informal)", correct: "Eres inteligente.", distractors: ["Estás inteligente.", "Soy inteligente.", "Son inteligente."] },
+            { q: "Translate to Spanish: 'He is from Mexico.' (Origin)", correct: "Él es de México.", distractors: ["Él está de México.", "Él soy de México.", "Él somos de México."] },
+            { q: "Translate to Spanish: 'We are friends.'", correct: "Somos amigos.", distractors: ["Estamos amigos.", "Son amigos.", "Soy amigo."] },
+            { q: "Translate to Spanish: 'They are tall.' (Inherent quality)", correct: "Ellos son altos.", distractors: ["Ellos están altos.", "Ellos somos altos.", "Ellos soy altos."] },
+            { q: "Select the correct form: 'Tú _____ de España.'", correct: "eres", distractors: ["soy", "es", "somos"] },
+            { q: "Select the correct form: 'Nosotros _____ profesores.' (Occupation)", correct: "somos", distractors: ["son", "es", "soy"] },
+            { q: "Select the correct form: 'María y Juan _____ simpáticos.'", correct: "son", distractors: ["somos", "es", "están"] },
+            { q: "Select the correct form: 'Yo _____ alto y rubio.'", correct: "soy", distractors: ["eres", "es", "estoy"] },
+            { q: "Select the correct form: 'El libro _____ de Carlos.' (Possession)", correct: "es", distractors: ["son", "está", "soy"] },
+            { q: "Translate to Spanish: 'It is one o'clock.' (Time)", correct: "Es la una.", distractors: ["Son la una.", "Está la una.", "Ser la una."] },
+            { q: "Translate to Spanish: 'It is three o'clock.' (Time)", correct: "Son las tres.", distractors: ["Es las tres.", "Están las tres.", "Somos las tres."] },
+            { q: "Translate to Spanish: 'Today is Monday.' (Date/Day)", correct: "Hoy es lunes.", distractors: ["Hoy está lunes.", "Hoy son lunes.", "Hoy soy lunes."] },
+            { q: "Translate to Spanish: 'The concert is in the park.' (Event location using Ser)", correct: "El concierto es en el parque.", distractors: ["El concierto está en el parque.", "El concierto son en el parque.", "El concierto soy en el parque."] },
+            { q: "Translate to Spanish: 'You are very kind.' (Formal singular)", correct: "Usted es muy amable.", distractors: ["Usted estás muy amable.", "Tú eres muy amable.", "Ustedes son muy amable."] },
+            { q: "Translate to Spanish: 'You all are students.' (Latin America plural)", correct: "Ustedes son estudiantes.", distractors: ["Somos estudiantes.", "Son estudiantes.", "Estáis estudiantes."] },
+            { q: "Translate to Spanish: 'The pen is blue.' (Inherent color)", correct: "El bolígrafo es azul.", distractors: ["El bolígrafo está azul.", "El bolígrafo son azul.", "El bolígrafo soy azul."] },
+            { q: "Translate to Spanish: 'We are doctors.' (Profession)", correct: "Somos médicos.", distractors: ["Estamos médicos.", "Son médicos.", "Soy médicos."] },
+            { q: "Select the correct form: '¿De dónde _____ tú?'", correct: "eres", distractors: ["es", "soy", "somos"] },
+            { q: "Select the correct form: 'La fiesta _____ a las ocho.' (Time of event)", correct: "es", distractors: ["está", "son", "soy"] },
+            { q: "Select the correct form: 'Las plumas _____ de María.' (Ownership)", correct: "son", distractors: ["es", "somos", "están"] },
+            { q: "Translate to Spanish: 'She is my mother.'", correct: "Ella es mi madre.", distractors: ["Ella está mi madre.", "Ella son mi madre.", "Ella soy mi madre."] },
+            { q: "Which sentence correctly uses 'ser' for material/composition?", correct: "La mesa es de madera.", distractors: ["La mesa está de madera.", "La mesa son de madera.", "La mesa hay de madera."] },
+            { q: "Translate to Spanish: 'I am from Chicago.'", correct: "Soy de Chicago.", distractors: ["Estoy de Chicago.", "Es de Chicago.", "Somos de Chicago."] },
+            { q: "Translate to Spanish: 'The car is fast.'", correct: "El carro es rápido.", distractors: ["El carro está rápido.", "El carro son rápido.", "El carro soy rápido."] },
+            { q: "Select the correct form: '¿Quién _____ tú?'", correct: "eres", distractors: ["es", "soy", "somos"] },
+            { q: "Translate to Spanish: 'It is midday.'", correct: "Es el mediodía.", distractors: ["Son el mediodía.", "Está el mediodía.", "Ser el mediodía."] },
+            { q: "Translate to Spanish: 'The house is big.' (Inherent characteristic)", correct: "La casa es grande.", distractors: ["La casa está grande.", "La casa son grande.", "La casa soy grande."] },
+            { q: "Translate to Spanish: 'The gold ring is expensive.'", correct: "El anillo de oro es caro.", distractors: ["El anillo de oro está caro.", "El anillo de oro son caro.", "El anillo de oro soy caro."] },
+            { q: "Translate to Spanish: 'The woman is a lawyer.'", correct: "La mujer es abogada.", distractors: ["La mujer está abogada.", "La mujer son abogada.", "La mujer soy abogada."] }
+        ];
+
+        let quizQuestions = [];
+        let currentQuestionIndex = 0;
+        let userAnswers = {}; // index -> selected answer string
+        let cheatCount = 0;
+        let studentData = {};
+        let submittedEmails = JSON.parse(localStorage.getItem('submitted_ser_estar_emails') || '[]');
+
+        const startScreen = document.getElementById('start-screen');
+        const quizScreen = document.getElementById('quiz-screen');
+        const endScreen = document.getElementById('end-screen');
+        const studentForm = document.getElementById('student-form');
+        const questionTracker = document.getElementById('question-tracker');
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const btnBack = document.getElementById('btn-back');
+        const btnNext = document.getElementById('btn-next');
+        const cheatModal = document.getElementById('cheat-modal');
+        const cheatNumber = document.getElementById('cheat-number');
+        const btnCheatOk = document.getElementById('btn-cheat-ok');
+        const finalScoreDisplay = document.getElementById('final-score');
+        const btnRefresh = document.getElementById('btn-refresh');
+        const emailInput = document.getElementById('email');
+        const emailError = document.getElementById('email-error');
+
+        function shuffleArray(array) {
+            let arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        // Initialize Quiz on Form Submit
+        studentForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const emailVal = emailInput.value.trim().toLowerCase();
+
+            if (submittedEmails.includes(emailVal)) {
+                emailError.classList.remove('hidden');
+                emailInput.focus();
+                return;
+            }
+            emailError.classList.add('hidden');
+
+            studentData = {
+                firstName: document.getElementById('fname').value.trim(),
+                lastName: document.getElementById('lname').value.trim(),
+                email: emailInput.value.trim(),
+                period: document.getElementById('period').value,
+                date: new Date().toLocaleString()
+            };
+
+            // Prepare 50 randomized questions with randomized options
+            quizQuestions = rawQuestions.map(item => {
+                const allOpts = shuffleArray([item.correct, ...item.distractors]);
+                return {
+                    q: item.q,
+                    correct: item.correct,
+                    options: allOpts
+                };
+            });
+            quizQuestions = shuffleArray(quizQuestions);
+
+            startScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            loadQuestion();
+        });
+
+        function loadQuestion() {
+            const currentQ = quizQuestions[currentQuestionIndex];
+            questionTracker.textContent = `Question ${currentQuestionIndex + 1} / 50`;
+            questionText.textContent = currentQ.q;
+            
+            optionsContainer.innerHTML = '';
+            currentQ.options.forEach((opt, idx) => {
+                const label = document.createElement('label');
+                label.className = 'option-label';
+                
+                const input = document.createElement('input');
+                input.type = 'radio';
+                input.name = 'quiz-option';
+                input.value = opt;
+                
+                if (userAnswers[currentQuestionIndex] === opt) {
+                    input.checked = true;
+                }
+                
+                input.addEventListener('change', () => {
+                    userAnswers[currentQuestionIndex] = opt;
+                });
+
+                const span = document.createElement('span');
+                span.className = 'option-text';
+                span.textContent = opt;
+
+                label.appendChild(input);
+                label.appendChild(span);
+                optionsContainer.appendChild(label);
+            });
+
+            btnBack.style.display = currentQuestionIndex === 0 ? 'none' : 'block';
+            btnNext.textContent = currentQuestionIndex === quizQuestions.length - 1 ? 'Submit Test' : 'Next';
+        }
+
+        // Navigation Handlers
+        btnBack.addEventListener('click', () => {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                loadQuestion();
+            }
+        });
+
+        btnNext.addEventListener('click', () => {
+            if (currentQuestionIndex < quizQuestions.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            } else {
+                finishQuiz();
+            }
+        });
+
+        // Press Enter to go Next
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !quizScreen.classList.contains('hidden') && cheatModal.classList.contains('hidden')) {
+                e.preventDefault();
+                btnNext.click();
+            }
+        });
+
+        function triggerCheat() {
+            if (!quizScreen.classList.contains('hidden') && endScreen.classList.contains('hidden')) {
+                cheatCount++;
+                cheatNumber.textContent = cheatCount;
+                cheatModal.classList.remove('hidden');
+            }
+        }
+
+        window.addEventListener('blur', triggerCheat);
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) triggerCheat();
+        });
+        document.addEventListener('mouseleave', () => {
+            triggerCheat();
+        });
+        window.addEventListener('mouseout', (e) => {
+            if (!e.relatedTarget && !e.toElement) {
+                triggerCheat();
+            }
+        });
+
+        btnCheatOk.addEventListener('click', () => {
+            cheatModal.classList.add('hidden');
+        });
+
+        function finishQuiz() {
+            let scoreCount = 0;
+            let resultsSummaryArr = [];
+
+            quizQuestions.forEach((item, idx) => {
+                const uAns = userAnswers[idx];
+                const isCorrect = uAns === item.correct;
+                if (isCorrect) scoreCount++;
+                resultsSummaryArr.push(`${idx + 1}${isCorrect ? 'r' : 'w'}`);
+            });
+
+            const percentage = Math.round((scoreCount / quizQuestions.length) * 100);
+            finalScoreDisplay.textContent = `${percentage}% (${scoreCount} / ${quizQuestions.length})`;
+
+            // Save email locally to prevent retakes
+            submittedEmails.push(studentData.email.toLowerCase());
+            localStorage.setItem('submitted_ser_estar_emails', JSON.stringify(submittedEmails));
+
+            const payload = {
+                title: "Ser y Estar Test (50 Qs)",
+                date: studentData.date,
+                firstName: studentData.firstName,
+                lastName: studentData.lastName,
+                email: studentData.email,
+                period: studentData.period,
+                score: `${percentage}% (${scoreCount}/${quizQuestions.length})`,
+                cheatCount: cheatCount,
+                results: resultsSummaryArr.join(', ')
+            };
+
+            // Send data to Google Sheet
+            if (GOOGLE_SHEET_WEB_APP_URL && GOOGLE_SHEET_WEB_APP_URL !== "https://script.google.com/macros/s/AKfycbxCS4RTjryw4mNi7frycJVuY0dXO9iEHqKMkTjRLQwiRKmhf5Yoa_pFUsCQwXvxP6g/exec") {
+                fetch(GOOGLE_SHEET_WEB_APP_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                }).catch(err => console.log('Google Sheet sync note:', err));
+            }
+
+            // Automatic CSV Record Download (Cleaned without detailed right/wrong breakdown)
+            downloadCSV(payload);
+
+            quizScreen.classList.add('hidden');
+            endScreen.classList.remove('hidden');
+        }
+
+        function downloadCSV(data) {
+            const csvContent = "data:text/csv;charset=utf-8," + 
+                "Quiz Title,Date,First Name,Last Name,Email,Period,Score,Cheating Alerts\n" +
+                `"${data.title}","${data.date}","${data.firstName}","${data.lastName}","${data.email}","${data.period}","${data.score}",${data.cheatCount}`;
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `Ser_y_Estar_Test_Record_${data.lastName}_${data.firstName}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        btnRefresh.addEventListener('click', () => {
+            window.location.reload();
+        });
+    </script>
+</body>
+</html>
