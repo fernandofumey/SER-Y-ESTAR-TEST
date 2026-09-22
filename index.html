@@ -42,11 +42,6 @@
 </head>
 <body class="bg-sky-50 text-sky-950 min-h-screen flex flex-col items-center justify-center p-4" oncontextmenu="return false;" oncopy="return false;" oncut="return false;" onpaste="return false;">
 
-    <script>
-        // PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL HERE
-        const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxCS4RTjryw4mNi7frycJVuY0dXO9iEHqKMkTjRLQwiRKmhf5Yoa_pFUsCQwXvxP6g/exec"; 
-    </script>
-
     <div id="app-container" class="w-full max-w-3xl bg-white rounded-2xl shadow-2xl overflow-hidden relative border border-sky-100">
         
         <!-- Header -->
@@ -149,6 +144,9 @@
     </div>
 
     <script>
+        // PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL HERE
+        const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxCS4RTjryw4mNi7frycJVuY0dXO9iEHqKMkTjRLQwiRKmhf5Yoa_pFUsCQwXvxP6g/exec"; 
+
         // 50 Question Master Bank covering Ser and Estar (StudySpanish Units 1-4) - NO VOSOTROS
         const rawQuestions = [
             // Estar - Location / Condition
@@ -391,14 +389,21 @@
                 results: resultsSummaryArr.join(', ')
             };
 
-            // Send data to Google Sheet
-            if (GOOGLE_SHEET_WEB_APP_URL && GOOGLE_SHEET_WEB_APP_URL !== "https://script.google.com/macros/s/AKfycbxCS4RTjryw4mNi7frycJVuY0dXO9iEHqKMkTjRLQwiRKmhf5Yoa_pFUsCQwXvxP6g/exec") {
+            // Send data to Google Sheet with robust error logging
+            if (GOOGLE_SHEET_WEB_APP_URL) {
                 fetch(GOOGLE_SHEET_WEB_APP_URL, {
                     method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
+                    mode: 'no-cors', // Bypasses strict CORS blocks
+                    headers: { 
+                        // Changed to text/plain to prevent browser preflight (OPTIONS) requests from blocking the transfer
+                        'Content-Type': 'text/plain;charset=utf-8' 
+                    },
                     body: JSON.stringify(payload)
-                }).catch(err => console.log('Google Sheet sync note:', err));
+                }).then(() => {
+                    console.log('Payload successfully dispatched to Google Apps Script endpoint.');
+                }).catch(err => {
+                    console.error('Google Sheet sync error:', err);
+                });
             }
 
             // Automatic CSV Record Download (Cleaned without detailed right/wrong breakdown)
