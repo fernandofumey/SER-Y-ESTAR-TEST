@@ -144,9 +144,6 @@
     </div>
 
     <script>
-        // PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL HERE
-        const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxCS4RTjryw4mNi7frycJVuY0dXO9iEHqKMkTjRLQwiRKmhf5Yoa_pFUsCQwXvxP6g/exec"; 
-
         // 50 Question Master Bank covering Ser and Estar (StudySpanish Units 1-4) - NO VOSOTROS
         const rawQuestions = [
             // Estar - Location / Condition
@@ -257,7 +254,6 @@
                 date: new Date().toLocaleString()
             };
 
-            // Prepare 50 randomized questions with randomized options
             quizQuestions = rawQuestions.map(item => {
                 const allOpts = shuffleArray([item.correct, ...item.distractors]);
                 return {
@@ -309,7 +305,6 @@
             btnNext.textContent = currentQuestionIndex === quizQuestions.length - 1 ? 'Submit Test' : 'Next';
         }
 
-        // Navigation Handlers
         btnBack.addEventListener('click', () => {
             if (currentQuestionIndex > 0) {
                 currentQuestionIndex--;
@@ -326,7 +321,6 @@
             }
         });
 
-        // Press Enter to go Next
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !quizScreen.classList.contains('hidden') && cheatModal.classList.contains('hidden')) {
                 e.preventDefault();
@@ -373,11 +367,15 @@
             const percentage = Math.round((scoreCount / quizQuestions.length) * 100);
             finalScoreDisplay.textContent = `${percentage}% (${scoreCount} / ${quizQuestions.length})`;
 
-            // Save email locally to prevent retakes
             submittedEmails.push(studentData.email.toLowerCase());
             localStorage.setItem('submitted_ser_estar_emails', JSON.stringify(submittedEmails));
 
-            const payload = {
+            // ====================================================================================
+            // THIS IS YOUR EXACT WEB APP URL PLACED CORRECTLY FOR SUBMISSION
+            // ====================================================================================
+            const GOOGLE_SHEET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxCS4RTjryw4mNi7frycJVuY0dXO9iEHqKMkTjRLQwiRKmhf5Yoa_pFUsCQwXvxP6g/exec";
+
+            const payloadData = {
                 title: "Ser y Estar Test (50 Qs)",
                 date: studentData.date,
                 firstName: studentData.firstName,
@@ -389,25 +387,31 @@
                 results: resultsSummaryArr.join(', ')
             };
 
-            // Send data to Google Sheet with robust error logging
             if (GOOGLE_SHEET_WEB_APP_URL) {
+                // Formatting payload as form data to bypass strict CORS on GitHub Pages
+                const formBody = [];
+                for (const property in payloadData) {
+                  const encodedKey = encodeURIComponent(property);
+                  const encodedValue = encodeURIComponent(payloadData[property]);
+                  formBody.push(encodedKey + "=" + encodedValue);
+                }
+                const formattedBody = formBody.join("&");
+
                 fetch(GOOGLE_SHEET_WEB_APP_URL, {
                     method: 'POST',
-                    mode: 'no-cors', // Bypasses strict CORS blocks
-                    headers: { 
-                        // Changed to text/plain to prevent browser preflight (OPTIONS) requests from blocking the transfer
-                        'Content-Type': 'text/plain;charset=utf-8' 
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
                     },
-                    body: JSON.stringify(payload)
+                    body: formattedBody
                 }).then(() => {
-                    console.log('Payload successfully dispatched to Google Apps Script endpoint.');
+                    console.log('Payload transmitted via form urlencoding');
                 }).catch(err => {
-                    console.error('Google Sheet sync error:', err);
+                    console.error('Transmission error:', err);
                 });
             }
 
-            // Automatic CSV Record Download (Cleaned without detailed right/wrong breakdown)
-            downloadCSV(payload);
+            downloadCSV(payloadData);
 
             quizScreen.classList.add('hidden');
             endScreen.classList.remove('hidden');
