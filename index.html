@@ -6,6 +6,7 @@
     <meta name="google" content="notranslate">
     <title>Ser y Estar Test</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    
     <style>
         /* Anti-AI & Anti-Selection Guardrails */
         body {
@@ -360,8 +361,13 @@
             quizQuestions.forEach((item, idx) => {
                 const uAns = userAnswers[idx];
                 const isCorrect = uAns === item.correct;
-                if (isCorrect) scoreCount++;
-                resultsSummaryArr.push(`${idx + 1}${isCorrect ? 'r' : 'w'}`);
+                if (isCorrect) {
+                    scoreCount++;
+                    resultsSummaryArr.push(`question ${idx + 1}: right answer: '${item.correct}'`);
+                } else {
+                    const wrongAns = uAns !== undefined ? uAns : 'No answer provided';
+                    resultsSummaryArr.push(`question ${idx + 1}: wrong answer: '${wrongAns}'; right answer: '${item.correct}'`);
+                }
             });
 
             const percentage = Math.round((scoreCount / quizQuestions.length) * 100);
@@ -384,7 +390,7 @@
                 period: studentData.period,
                 score: `${percentage}% (${scoreCount}/${quizQuestions.length})`,
                 cheatCount: cheatCount,
-                results: resultsSummaryArr.join(', ')
+                results: resultsSummaryArr.join(' | ') // Using a pipe/space separation to keep it readable
             };
 
             if (GOOGLE_SHEET_WEB_APP_URL) {
